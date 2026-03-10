@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="vi">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Panel - Quản Lý Quyền</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/static/css/style.css">
+    <style>
+        .admin-container {
+            max-width: 1000px;
+            margin: 2rem auto;
+            background: var(--surface-color);
+            border-radius: 12px;
+            padding: 2rem;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+        }
+
+        .user-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 1rem;
+        }
+
+        .user-table th,
+        .user-table td {
+            text-align: left;
+            padding: 12px 16px;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .user-table th {
+            font-weight: 600;
+            color: var(--text-color);
+            background-color: var(--background-color);
+        }
+
+        .role-badge {
+            display: inline-block;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 0.8rem;
+            font-weight: 500;
+            margin-right: 4px;
+            margin-bottom: 4px;
+            background: var(--primary-color);
+            color: white;
+        }
+
+        .action-select {
+            padding: 6px;
+            border-radius: 4px;
+            border: 1px solid var(--border-color);
+        }
+    </style>
+</head>
+
+<body>
+    <header class="header">
+        <div class="logo">Admin Panel - Meeting Minutes</div>
+        <div class="user-info">
+            <span id="usernameDisplay">Admin</span>
+            <button onclick="logout()" class="btn btn-outline" style="margin-left: 1rem;">Đăng xuất</button>
+            <button onclick="window.location.href='/'" class="btn btn-outline" style="margin-left: 1rem;">Về Trang
+                Chủ</button>
+        </div>
+    </header>
+
+    <div class="container" style="margin-top: 1rem; margin-bottom: 2rem;">
+        <div style="display: flex; gap: 1rem; max-width: 1000px; margin: 0 auto;">
+            <button class="btn btn-secondary" id="tabUsers" onclick="switchTab('users')"
+                style="border-radius: 8px 8px 0 0; border-bottom: none; background: var(--surface-color); color: var(--text-color); font-weight: 600;">Quản
+                lý Người Dùng</button>
+            <button class="btn btn-outline" id="tabMeetings" onclick="switchTab('meetings')"
+                style="border-radius: 8px 8px 0 0; border-bottom: none; background: #f3f4f6; color: #4b5563;">Toàn bộ
+                Biên bản</button>
+        </div>
+    </div>
+
+    <main class="container" style="margin-top: 0;">
+        <!-- Tab Người Dùng -->
+        <div class="admin-container" id="sectionUsers" style="margin-top: 0; border-top-left-radius: 0;">
+            <h2>Quản lý Người Dùng & Phân Quyền</h2>
+            <div id="alertMessage" style="margin-top: 1rem; color: #b91c1c; font-weight: 500;"></div>
+
+
+            <table class="user-table">
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Tên Đăng Nhập</th>
+                        <th>Họ Tên</th>
+                        <th>Quyền Hiện Tại</th>
+                        <th>Hành Động (Thêm Quyền)</th>
+                        <th>Hành Động (Gỡ Quyền)</th>
+                    </tr>
+                </thead>
+                <tbody id="userTableBody">
+                    <!-- Dữ liệu render bằng JS -->
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Tab Biên bản -->
+        <div class="admin-container" id="sectionMeetings"
+            style="display: none; margin-top: 0; border-top-left-radius: 0;">
+            <h2>Danh sách Biên bản Toàn Hệ Thống</h2>
+
+            <!-- Filter Bar for Admin -->
+            <div class="card mb-4"
+                style="background: #f8fafc; padding: 1rem; border: 1px solid #e2e8f0; border-radius: 8px; display: flex; gap: 1rem; flex-wrap: wrap; margin-bottom: 1.5rem;">
+                <div style="flex: 1; min-width: 200px;">
+                    <input type="text" id="adminSearchInput" placeholder="🔍 Tìm kiếm tiêu đề hoặc nội dung..."
+                        style="width: 100%; border: 1px solid var(--border-color); border-radius: var(--radius); padding: 0.5rem;">
+                </div>
+                <div style="min-width: 150px;">
+                    <select id="adminStatusFilter"
+                        style="width: 100%; border: 1px solid var(--border-color); border-radius: var(--radius); padding: 0.5rem; background: white;">
+                        <option value="ALL">Tất cả trạng thái</option>
+                        <option value="NHAP">Nháp</option>
+                        <option value="CHO_DUYET">Chờ duyệt</option>
+                        <option value="DA_DUYET">Đã duyệt</option>
+                        <option value="DA_KY">Đã ký số</option>
+                        <option value="LUU_TRU">Lưu trữ</option>
+                    </select>
+                </div>
+                <div
+                    style="display: flex; align-items: center; gap: 0.5rem; background: white; padding: 0 0.5rem; border: 1px solid var(--border-color); border-radius: var(--radius);">
+                    <span class="text-sm text-muted" style="font-size: 0.8rem;">Từ:</span>
+                    <input type="date" id="adminDateFrom"
+                        style="border: none; outline: none; background: transparent; font-size: 0.8rem;">
+                    <span class="text-sm text-muted" style="font-size: 0.8rem;">Đến:</span>
+                    <input type="date" id="adminDateTo"
+                        style="border: none; outline: none; background: transparent; font-size: 0.8rem;">
+                </div>
+                <button onclick="applyAdminFilters()" class="btn btn-primary" style="padding: 0.5rem 1rem;">Lọc</button>
+                <button onclick="resetAdminFilters()" class="btn btn-outline" style="padding: 0.5rem 1rem;">Xóa bộ
+                    lọc</button>
+            </div>
+
+            <table class="user-table">
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Người Tạo</th>
+                        <th>Tiêu đề</th>
+                        <th>Trạng thái</th>
+                        <th>Ngày tạo</th>
+                        <th>Hành động</th>
+                    </tr>
+                </thead>
+                <tbody id="meetingTableBody">
+                    <!-- Dữ liệu render bằng JS -->
+                </tbody>
+            </table>
+        </div>
+    </main>
+
+    <script src="/static/js/api.js?v=2"></script>
+    <script src="/static/js/admin.js?v=2"></script>
+</body>
+
+</html>

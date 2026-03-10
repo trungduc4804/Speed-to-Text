@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="vi">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Đăng ký - Meeting Minutes AI</title>
+    <link rel="stylesheet" href="/static/css/style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+</head>
+
+<body>
+    <div class="auth-container">
+        <div class="card">
+            <div class="auth-header">
+                <h2>🚀 Tạo tài khoản mới</h2>
+                <p class="text-muted">Bắt đầu quản lý cuộc họp thông minh</p>
+            </div>
+
+            <form onsubmit="register(event)">
+                <div class="form-group">
+                    <label for="fullName">Họ và tên</label>
+                    <input type="text" id="fullName" required placeholder="Nguyễn Văn A">
+                </div>
+                <div class="form-group">
+                    <label for="username">Tên đăng nhập</label>
+                    <input type="text" id="username" required placeholder="username123">
+                </div>
+                <div class="form-group">
+                    <label for="password">Mật khẩu</label>
+                    <input type="password" id="password" required placeholder="••••••••">
+                </div>
+
+                <div id="error" class="error text-center mb-4" style="color: var(--danger-color);"></div>
+
+                <button type="submit" class="btn btn-primary" style="width: 100%;">Đăng ký ngay</button>
+            </form>
+
+            <p class="text-center mt-4 text-sm">
+                Đã có tài khoản? <a href="/login">Đăng nhập</a>
+            </p>
+        </div>
+    </div>
+    <script src="/static/js/auth.js"></script>
+</body>
+
+</html>

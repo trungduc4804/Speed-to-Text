@@ -1,0 +1,21 @@
+# Models
+backend/models/*.bin
+backend/models/*.pt
+backend/models/*.safetensors
+
+# FFmpeg binaries
+backend/ffmpeg/bin/*.exe
+backend/ffmpeg/bin/*.dll
+
+# Python cache and virtual environment
+__pycache__/
+*.py[cod]
+*$py.class
+venv/
+env/
+.env
+
+# Other potential large files
+node_modules/
+*.sqlite3
+*.db

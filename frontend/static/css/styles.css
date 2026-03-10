@@ -1,0 +1,15 @@
+/* Basic layout placeholders for the student project. */
+
+body {
+  font-family: Arial, sans-serif;
+  margin: 0;
+  padding: 0 1rem;
+}
+
+section {
+  margin: 1rem 0;
+  padding: 1rem;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+}
+

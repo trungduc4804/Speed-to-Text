@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="vi">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Dashboard - Meeting Minutes AI</title>
+  <link rel="stylesheet" href="/static/css/style.css?v=2">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+</head>
+
+<body onload="loadMeetings()">
+  <nav class="navbar">
+    <div class="brand">
+      <span>🎙️ Meeting Minutes AI</span>
+    </div>
+    <div style="display: flex; align-items: center; gap: 1rem;">
+      <span class="text-sm text-muted">Xin chào!</span>
+      <a href="/admin" id="adminLink"
+        style="display: none; text-decoration: none; font-weight: 500; font-size: 0.9rem; color: var(--primary-color);">Quản
+        Lý Quyền (Admin)</a>
+      <button onclick="logout()" class="btn btn-secondary text-sm">Đăng xuất</button>
+    </div>
+
+    <script>
+      // Kiểm tra và hiển thị nút Admin nếu có quyền
+      document.addEventListener('DOMContentLoaded', () => {
+        const roles = localStorage.getItem('user_roles');
+        if (roles && roles.includes("ADMIN")) {
+          document.getElementById('adminLink').style.display = 'inline-block';
+        }
+      });
+    </script>
+  </nav>
+
+  <div class="container">
+    <!-- New Meeting Section -->
+    <div class="card mb-4" style="background: linear-gradient(to right, #ffffff, #f9fafb);">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
+        <div>
+          <h3 style="margin: 0;">Tạo biên bản mới</h3>
+          <p class="text-muted text-sm" style="margin: 0.25rem 0 0 0;">Upload file ghi âm để AI tự động chuyển thành văn
+            bản</p>
+        </div>
+      </div>
+
+      <form id="createMeetingForm" onsubmit="createMeeting(event)"
+        style="display: grid; grid-template-columns: 2fr 2fr 1fr; gap: 1rem; align-items: end;">
+        <div>
+          <label>Tiêu đề cuộc họp</label>
+          <input type="text" id="meetingTitle" required placeholder="VD: Họp giao ban tuần 4">
+        </div>
+        <div>
+          <label>File ghi âm (.mp3, .wav)</label>
+          <input type="file" id="audioFile" accept=".mp3,.wav" required
+            style="border: 1px solid var(--border-color); border-radius: var(--radius); width: 100%;">
+        </div>
+        <button type="submit" class="btn btn-primary">
+          <span>✨ Bắt đầu xử lý</span>
+        </button>
+      </form>
+    </div>
+
+    <!-- Meeting List Section -->
+    <div
+      style="display: flex; justify-content: space-between; align-items: center; margin-top: 2rem; margin-bottom: 1rem;">
+      <h3 style="margin: 0;">Danh sách biên bản</h3>
+    </div>
+
+    <!-- Filter Bar -->
+    <div class="card mb-4"
+      style="background: #f8fafc; padding: 1rem; border: 1px solid #e2e8f0; display: flex; gap: 1rem; flex-wrap: wrap;">
+      <div style="flex: 1; min-width: 200px;">
+        <input type="text" id="searchInput" placeholder="🔍 Tìm kiếm tiêu đề hoặc nội dung..."
+          style="width: 100%; border: 1px solid var(--border-color); border-radius: var(--radius); padding: 0.5rem;">
+      </div>
+      <div style="min-width: 150px;">
+        <select id="statusFilter"
+          style="width: 100%; border: 1px solid var(--border-color); border-radius: var(--radius); padding: 0.5rem; background: white;">
+          <option value="ALL">Tất cả trạng thái</option>
+          <option value="NHAP">Nháp</option>
+          <option value="CHO_DUYET">Chờ duyệt</option>
+          <option value="DA_DUYET">Đã duyệt</option>
+          <option value="DA_KY">Đã ký số</option>
+          <option value="LUU_TRU">Lưu trữ</option>
+        </select>
+      </div>
+      <div
+        style="display: flex; align-items: center; gap: 0.5rem; background: white; padding: 0 0.5rem; border: 1px solid var(--border-color); border-radius: var(--radius);">
+        <span class="text-sm text-muted">Từ:</span>
+        <input type="date" id="dateFrom" style="border: none; outline: none; background: transparent;">
+        <span class="text-sm text-muted">Đến:</span>
+        <input type="date" id="dateTo" style="border: none; outline: none; background: transparent;">
+      </div>
+      <button onclick="applyFilters()" class="btn btn-primary" style="padding: 0.5rem 1rem;">Lọc</button>
+      <button onclick="resetFilters()" class="btn btn-outline" style="padding: 0.5rem 1rem;">Xóa bộ lọc</button>
+    </div>
+
+    <div id="meetingList" class="meeting-grid">
+      <!-- Loading State -->
+      <div class="text-muted">Đang tải danh sách...</div>
+    </div>
+  </div>
+  <script src="/static/js/main.js?v=2"></script>
+</body>
+
+</html>
