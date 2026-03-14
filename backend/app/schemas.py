@@ -50,6 +50,9 @@ class MeetingUpdate(BaseModel):
 class MeetingStatusUpdate(BaseModel):
     status: MeetingStatus
 
+# Schema nhận chữ ký từ client (ký phía client bằng Web Crypto API)
+class SignRequest(BaseModel):
+    signature: str  # base64-encoded RSA-PSS signature
 
 class MeetingResponse(MeetingBase):
     id: int
@@ -60,6 +63,7 @@ class MeetingResponse(MeetingBase):
     summary: Optional[str] = None
     action_items: Optional[str] = None
     pdf_path: Optional[str] = None
+    signature: Optional[str] = None  # Chữ ký số RSA (base64)
     status: MeetingStatus
     created_at: datetime
 
@@ -69,4 +73,3 @@ class MeetingResponse(MeetingBase):
 class MeetingAdminResponse(MeetingResponse):
     owner_username: str
     owner_fullname: Optional[str] = None
-

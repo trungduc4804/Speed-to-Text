@@ -22,9 +22,11 @@ class Meeting(Base):
     transcript = Column(Text)
     final_content = Column(Text)
     summary = Column(Text, nullable=True)
-    action_items = Column(Text, nullable=True) # Storing JSON string for simplicity
+    action_items = Column(Text, nullable=True)  # JSON string
     pdf_path = Column(String)
-    status = Column(String, default=MeetingStatus.DRAFT.value) # Use MeetingStatus Enum values
+    signature = Column(Text, nullable=True)      # Chữ ký số RSA (base64)
+    status = Column(String, default=MeetingStatus.DRAFT.value)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
 
     owner = relationship("app.models.user.User", backref="meetings")
+
