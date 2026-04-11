@@ -208,7 +208,7 @@ async function loadMeetingDetail(id) {
 
         document.getElementById('title').textContent = meeting.title;
         document.getElementById('content').value = meeting.final_content || '';
-        document.getElementById('audioSource').src = '/' + meeting.audio_path;
+        document.getElementById('audioSource').src = '/api/v1/files/stream?path=' + meeting.audio_path;
 
         // Render AI Data
         const summaryEl = document.getElementById('aiSummary');
