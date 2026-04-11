@@ -322,29 +322,171 @@ async function exportPDF(id) {
     }
 }
 
-async function signPDF(id) {
-    if (!confirm("Bạn có chắc muốn ký số? Sau khi ký sẽ không thể chỉnh sửa.")) return;
+// =====================================================================
+// KÝ SỐ THỰC SỰ — Web Crypto API (RSA-PSS, SHA-256)
+// Private key chỉ tồn tại trên máy người dùng, server không bao giờ thấy.
+// =====================================================================
+
+/**
+ * Tạo cặp khóa RSA-PSS 2048-bit ngay trong trình duyệt.
+ * - private_key.pem  → tự động download về máy người dùng
+ * - public_key.pem   → tự động upload lên server và lưu vào DB
+ */
+async function generateKeyPair() {
+    if (!confirm("Tạo cặp khóa RSA mới?\n\n⚠️ Nếu bạn đã có cặp khóa trước đó, public key cũ sẽ bị ghi đè.\nHãy bảo quản file private_key.pem cẩn thận — bạn sẽ cần nó khi ký số.")) return;
+
+    const btn = document.getElementById('generateKeyBtn');
+    if (btn) { btn.disabled = true; btn.textContent = '⏳ Đang tạo khóa...'; }
 
     try {
-        const response = await fetch(`${API_BASE}/signature/sign/${id}`, {
+        const keyPair = await crypto.subtle.generateKey(
+            { name: "RSA-PSS", modulusLength: 2048, publicExponent: new Uint8Array([1, 0, 1]), hash: "SHA-256" },
+            true, ["sign", "verify"]
+        );
+
+        // Export private key → download
+        const privateKeyBuffer = await crypto.subtle.exportKey("pkcs8", keyPair.privateKey);
+        downloadText("private_key.pem", bufferToPem(privateKeyBuffer, "PRIVATE KEY"));
+
+        // Export public key → upload lên server
+        const publicKeyBuffer = await crypto.subtle.exportKey("spki", keyPair.publicKey);
+        const publicKeyPem = bufferToPem(publicKeyBuffer, "PUBLIC KEY");
+
+        const formData = new FormData();
+        formData.append('public_key', new Blob([publicKeyPem], { type: 'text/plain' }), 'public_key.pem');
+
+        const response = await fetch(`${API_BASE}/signature/save-public-key`, {
             method: 'POST',
-            headers: { 'Authorization': `Bearer ${getToken()}` }
+            headers: { 'Authorization': `Bearer ${getToken()}` },
+            body: formData
         });
 
         if (response.ok) {
-            const data = await response.json();
-            alert('Ký số thành công!\nSignature: ' + data.signature.substring(0, 20) + '...');
-
-            // Should verify process flow. Maybe download keys?
-            // For now just reload
-            location.reload();
+            alert('✅ Tạo khóa thành công!\n\nFile private_key.pem đã được tải về máy bạn.\nHãy bảo quản an toàn — bạn sẽ cần nó mỗi lần ký số!');
+            checkUserPublicKey();
         } else {
-            const data = await response.json();
-            alert(data.detail || 'Ký số thất bại');
+            const err = await response.json();
+            alert('Lỗi lưu public key: ' + (err.detail || 'Unknown error'));
         }
     } catch (e) {
-        alert('Lỗi kết nối');
+        console.error(e);
+        alert('Lỗi tạo khóa: ' + e.message);
+    } finally {
+        if (btn) { btn.disabled = false; btn.textContent = '🔑 Tạo cặp khóa mới'; }
     }
+}
+
+/**
+ * Mở modal ký số. Kiểm tra public key trước.
+ */
+async function signPDF(id) {
+    const pkRes = await fetch(`${API_BASE}/signature/public-key/me`, {
+        headers: { 'Authorization': `Bearer ${getToken()}` }
+    });
+    const pkData = await pkRes.json();
+    if (!pkData.has_public_key) {
+        alert('⚠️ Bạn chưa có public key trong hệ thống.\nHãy nhấn "Tạo cặp khóa mới" trước khi ký số.');
+        return;
+    }
+    document.getElementById('signModal').style.display = 'flex';
+    document.getElementById('signMeetingId').value = id;
+}
+
+/**
+ * Thực hiện ký số phía client bằng Web Crypto API, gửi signature lên server.
+ */
+async function executeSign() {
+    const id = document.getElementById('signMeetingId').value;
+    const fileInput = document.getElementById('privateKeyFile');
+    if (!fileInput.files[0]) { alert('Vui lòng chọn file private_key.pem'); return; }
+
+    const btn = document.getElementById('executeSignBtn');
+    btn.disabled = true;
+    btn.textContent = '⏳ Đang ký...';
+
+    try {
+        // 1. Lấy nội dung PDF từ server
+        const pdfRes = await fetch(`${API_BASE}/pdf/export/${id}`, {
+            headers: { 'Authorization': `Bearer ${getToken()}` }
+        });
+        if (!pdfRes.ok) { alert('Lỗi: Chưa có PDF. Hãy xuất PDF trước.'); return; }
+        const pdfBuffer = await pdfRes.arrayBuffer();
+
+        // 2. Đọc private key PEM từ file người dùng upload
+        const privateKeyPem = await fileInput.files[0].text();
+        const privateKey = await importPrivateKey(privateKeyPem);
+
+        // 3. Ký dữ liệu PDF bằng RSA-PSS SHA-256
+        const signatureBuffer = await crypto.subtle.sign(
+            { name: "RSA-PSS", saltLength: 32 },
+            privateKey,
+            pdfBuffer
+        );
+
+        // 4. Encode sang base64 và gửi lên server
+        const signatureBase64 = btoa(String.fromCharCode(...new Uint8Array(signatureBuffer)));
+
+        const response = await fetch(`${API_BASE}/signature/sign/${id}`, {
+            method: 'POST',
+            headers: { 'Authorization': `Bearer ${getToken()}`, 'Content-Type': 'application/json' },
+            body: JSON.stringify({ signature: signatureBase64 })
+        });
+
+        if (response.ok) {
+            closeSignModal();
+            alert('✅ Ký số thành công! Biên bản đã được xác thực và khóa chỉnh sửa.');
+            location.reload();
+        } else {
+            const err = await response.json();
+            alert('❌ Ký số thất bại: ' + (err.detail || 'Unknown error'));
+        }
+    } catch (e) {
+        console.error(e);
+        alert('Lỗi khi ký: ' + e.message);
+    } finally {
+        btn.disabled = false;
+        btn.textContent = '✍️ Xác nhận ký số';
+    }
+}
+
+function closeSignModal() {
+    document.getElementById('signModal').style.display = 'none';
+    document.getElementById('privateKeyFile').value = '';
+}
+
+async function checkUserPublicKey() {
+    try {
+        const res = await fetch(`${API_BASE}/signature/public-key/me`, {
+            headers: { 'Authorization': `Bearer ${getToken()}` }
+        });
+        const data = await res.json();
+        const indicator = document.getElementById('keyStatusIndicator');
+        if (indicator) {
+            indicator.textContent = data.has_public_key ? '✅ Đã có public key trong hệ thống' : '⚠️ Chưa có public key — hãy tạo cặp khóa';
+            indicator.style.color = data.has_public_key ? '#16a34a' : '#d97706';
+        }
+    } catch (e) { /* ignore */ }
+}
+
+// ---- Helpers ----
+function bufferToPem(buffer, label) {
+    const base64 = btoa(String.fromCharCode(...new Uint8Array(buffer)));
+    return `-----BEGIN ${label}-----\n${base64.match(/.{1,64}/g).join('\n')}\n-----END ${label}-----\n`;
+}
+
+function downloadText(filename, text) {
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(new Blob([text], { type: 'text/plain' }));
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+}
+
+async function importPrivateKey(pem) {
+    const b64 = pem.replace(/-----[^-]+-----/g, '').replace(/\s/g, '');
+    const buffer = Uint8Array.from(atob(b64), c => c.charCodeAt(0)).buffer;
+    return crypto.subtle.importKey("pkcs8", buffer, { name: "RSA-PSS", hash: "SHA-256" }, false, ["sign"]);
 }
 
 async function analyzeMeeting(id) {

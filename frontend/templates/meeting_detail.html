@@ -7,6 +7,60 @@
     <title>Chi tiết Biên bản - Meeting Minutes AI</title>
     <link rel="stylesheet" href="/static/css/style.css?v=2">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        /* Modal ký số */
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal-box {
+            background: white;
+            border-radius: 16px;
+            padding: 2rem;
+            max-width: 480px;
+            width: 90%;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+        }
+
+        .modal-box h3 {
+            margin: 0 0 0.5rem 0;
+            font-size: 1.25rem;
+        }
+
+        .modal-box p {
+            margin: 0 0 1.5rem 0;
+            color: #64748b;
+            font-size: 0.9rem;
+        }
+
+        .modal-footer {
+            display: flex;
+            gap: 0.75rem;
+            margin-top: 1.5rem;
+        }
+
+        .key-section {
+            background: #f8fafc;
+            border: 1px solid #e2e8f0;
+            border-radius: 10px;
+            padding: 1rem;
+            margin-bottom: 0.75rem;
+        }
+
+        .key-section h5 {
+            margin: 0 0 0.5rem 0;
+            font-size: 0.85rem;
+            color: #475569;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+    </style>
 </head>
 
 <body>
@@ -26,7 +80,7 @@
         </div>
     </nav>
 
-    <div class="container" style="max-width: 1400px;"> <!-- Wider container for editor -->
+    <div class="container" style="max-width: 1400px;">
         <div class="editor-layout">
             <!-- Left Panel: Audio & Metadata -->
             <div class="audio-panel">
@@ -41,12 +95,9 @@
 
                 <div>
                     <h4 style="margin-bottom: 1rem;">Thao tác</h4>
-                    <p class="text-sm text-muted" style="margin-bottom: 1rem;">
-                        Sau khi chỉnh sửa xong nội dung, bạn có thể xuất file PDF hoặc thực hiện ký số để xác thực biên
-                        bản.
-                    </p>
 
-                    <div style="display: flex; flex-direction: column; gap: 0.75rem;">
+                    <!-- Thao tác cơ bản -->
+                    <div style="display: flex; flex-direction: column; gap: 0.75rem; margin-bottom: 1.5rem;">
                         <button id="analyzeBtn" onclick="analyzeMeeting(MEETING_ID)" class="btn btn-outline"
                             style="width: 100%; justify-content: flex-start; color: var(--primary-color); border-color: var(--primary-color);">
                             ✨ Chạy lại AI Phân Tích
@@ -59,9 +110,27 @@
                             style="background-color: #f59e0b; color: white; width: 100%; justify-content: flex-start;">
                             📄 Xuất PDF
                         </button>
+                    </div>
+
+                    <!-- Ký số thực sự -->
+                    <hr style="border: 0; border-top: 1px solid var(--border-color); margin-bottom: 1rem;">
+                    <h5
+                        style="margin: 0 0 0.75rem 0; color: #475569; font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.05em;">
+                        🔐 Ký Số Điện Tử</h5>
+
+                    <div class="key-section">
+                        <h5>Trạng thái khóa</h5>
+                        <span id="keyStatusIndicator" style="font-size: 0.9rem;">Đang kiểm tra...</span>
+                    </div>
+
+                    <div style="display: flex; flex-direction: column; gap: 0.75rem;">
+                        <button id="generateKeyBtn" onclick="generateKeyPair()" class="btn btn-outline"
+                            style="width: 100%; justify-content: flex-start; font-size: 0.9rem;">
+                            🔑 Tạo cặp khóa mới
+                        </button>
                         <button id="signBtn" onclick="signPDF(MEETING_ID)" class="btn btn-success"
                             style="width: 100%; justify-content: flex-start;">
-                            ✍️ Ký số & Kết thúc
+                            ✍️ Ký số &amp; Kết thúc
                         </button>
                     </div>
                 </div>
@@ -106,10 +175,41 @@
         </div>
     </div>
 
-    <script src="/static/js/main.js?v=2"></script>
+    <!-- ===== Modal Ký Số ===== -->
+    <div id="signModal" class="modal-overlay">
+        <div class="modal-box">
+            <h3>✍️ Ký Số Biên Bản</h3>
+            <p>Upload file <strong>private_key.pem</strong> của bạn để ký số. Khóa này <strong>không được gửi lên
+                    server</strong> — quá trình ký diễn ra hoàn toàn trong trình duyệt.</p>
+
+            <input type="hidden" id="signMeetingId">
+
+            <div style="margin-bottom: 1rem;">
+                <label class="text-sm text-muted" style="display: block; margin-bottom: 0.5rem;">Chọn file
+                    private_key.pem</label>
+                <input type="file" id="privateKeyFile" accept=".pem,.key,text/plain"
+                    style="width: 100%; padding: 0.5rem; border: 1px solid #e2e8f0; border-radius: 8px; font-size: 0.9rem;">
+            </div>
+
+            <div
+                style="background: #fef3c7; border: 1px solid #fcd34d; border-radius: 8px; padding: 0.75rem; font-size: 0.85rem; color: #92400e;">
+                ⚠️ Sau khi ký số, biên bản sẽ bị <strong>khóa hoàn toàn</strong> và không thể chỉnh sửa.
+            </div>
+
+            <div class="modal-footer">
+                <button onclick="closeSignModal()" class="btn btn-secondary" style="flex: 1;">Hủy</button>
+                <button id="executeSignBtn" onclick="executeSign()" class="btn btn-success" style="flex: 2;">
+                    ✍️ Xác nhận ký số
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script src="/static/js/main.js?v=3"></script>
     <script>
         document.addEventListener('DOMContentLoaded', () => {
             loadMeetingDetail(MEETING_ID);
+            checkUserPublicKey();
         });
     </script>
 </body>
