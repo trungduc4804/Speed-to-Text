@@ -7,6 +7,7 @@
   <title>Dashboard - Meeting Minutes AI</title>
   <link rel="stylesheet" href="/static/css/style.css?v=2">
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <script src="/static/js/theme.js"></script>
 </head>
 
 <body onload="loadMeetings()">
@@ -19,6 +20,8 @@
       <a href="/admin" id="adminLink"
         style="display: none; text-decoration: none; font-weight: 500; font-size: 0.9rem; color: var(--primary-color);">Quản
         Lý Quyền (Admin)</a>
+      <a href="/profile" class="btn btn-outline text-sm" style="text-decoration: none;">👤 Hồ sơ cá nhân</a>
+      <button onclick="toggleTheme()" id="themeToggleBtn" class="btn btn-outline text-sm" style="margin-right: 0.5rem; display: flex; align-items: center;"></button>
       <button onclick="logout()" class="btn btn-secondary text-sm">Đăng xuất</button>
     </div>
 
@@ -35,7 +38,7 @@
 
   <div class="container">
     <!-- New Meeting Section -->
-    <div class="card mb-4" style="background: linear-gradient(to right, #ffffff, #f9fafb);">
+    <div class="card mb-4">
       <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
         <div>
           <h3 style="margin: 0;">Tạo biên bản mới</h3>
@@ -69,14 +72,14 @@
 
     <!-- Filter Bar -->
     <div class="card mb-4"
-      style="background: #f8fafc; padding: 1rem; border: 1px solid #e2e8f0; display: flex; gap: 1rem; flex-wrap: wrap;">
+      style="padding: 1rem; display: flex; gap: 1rem; flex-wrap: wrap;">
       <div style="flex: 1; min-width: 200px;">
         <input type="text" id="searchInput" placeholder="🔍 Tìm kiếm tiêu đề hoặc nội dung..."
           style="width: 100%; border: 1px solid var(--border-color); border-radius: var(--radius); padding: 0.5rem;">
       </div>
       <div style="min-width: 150px;">
         <select id="statusFilter"
-          style="width: 100%; border: 1px solid var(--border-color); border-radius: var(--radius); padding: 0.5rem; background: white;">
+          style="width: 100%; border: 1px solid var(--border-color); border-radius: var(--radius); padding: 0.5rem;">
           <option value="ALL">Tất cả trạng thái</option>
           <option value="NHAP">Nháp</option>
           <option value="CHO_DUYET">Chờ duyệt</option>
@@ -86,7 +89,7 @@
         </select>
       </div>
       <div
-        style="display: flex; align-items: center; gap: 0.5rem; background: white; padding: 0 0.5rem; border: 1px solid var(--border-color); border-radius: var(--radius);">
+        style="display: flex; align-items: center; gap: 0.5rem; padding: 0 0.5rem; border: 1px solid var(--border-color); border-radius: var(--radius);">
         <span class="text-sm text-muted">Từ:</span>
         <input type="date" id="dateFrom" style="border: none; outline: none; background: transparent;">
         <span class="text-sm text-muted">Đến:</span>

@@ -7,6 +7,7 @@
     <title>Chi tiết Biên bản - Meeting Minutes AI</title>
     <link rel="stylesheet" href="/static/css/style.css?v=2">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <script src="/static/js/theme.js"></script>
     <style>
         /* Modal ký số */
         .modal-overlay {
@@ -74,8 +75,10 @@
                 <span>←</span> Quay lại
             </a>
         </div>
-        <div>
-            <span id="status" class="status-badge" style="margin-right: 1rem;"></span>
+        <div style="display: flex; align-items: center; gap: 1rem;">
+            <span id="status" class="status-badge"></span>
+            <a href="/profile" class="btn btn-outline text-sm" style="text-decoration: none;">👤 Hồ sơ cá nhân</a>
+            <button onclick="toggleTheme()" id="themeToggleBtn" class="btn btn-outline text-sm" style="margin-right: 0.5rem; display: flex; align-items: center;"></button>
             <button onclick="logout()" class="btn btn-secondary text-sm">Đăng xuất</button>
         </div>
     </nav>
@@ -141,7 +144,7 @@
 
                 <!-- AI Assistant Box -->
                 <div class="content-panel" id="aiPanel"
-                    style="background: linear-gradient(to right, #f8fafc, #eff6ff); border: 1px solid #bfdbfe;">
+                    style="border: 1px solid var(--border-color);">
                     <div style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 1rem;">
                         <span style="font-size: 1.5rem;">🤖</span>
                         <h3 style="margin: 0; color: #1e40af;">AI Trợ lý</h3>
