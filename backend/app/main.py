@@ -68,6 +68,10 @@ def create_app() -> FastAPI:
     async def admin_page(request: Request):
         return templates.TemplateResponse("admin.html", {"request": request})
 
+    @app.get("/profile", response_class=HTMLResponse)
+    async def profile_page(request: Request):
+        return templates.TemplateResponse("profile.html", {"request": request})
+
     return app
 
 
